@@ -1,4 +1,4 @@
-# SketchVault
+# excalidraw-cloud-starter
 
 Private, cloud-synced Excalidraw workspaces built with React, Vite, Amplify Gen 2, S3, and shadcn/ui.
 
@@ -13,12 +13,12 @@ Deploy with your Amplify Hosting Git connection or `npx ampx pipeline-deploy` in
 
 ## Architecture
 
-`User.id` is a stable application UUID. Cognito issuer/subject pairs are linked privately through `IdentityLink`; email is mutable profile data. Workspace metadata uses `Folder` and `WorkspaceFile`; display names are never object keys. See the ADRs in `docs/decisions/` for the authorization, S3, hierarchy, scene, and conflict rules.
+`User.id` is a stable application UUID. Cognito issuer/subject pairs are linked privately through `IdentityLink`; email is mutable profile data. Workspace metadata uses `Folder` and `WorkspaceFile`; display names are never object keys. Authenticated AppSync workspace operations mediate all folder, drawing, import/export, and byte-transfer actions. Browser S3 access is denied.
 
 ## Cognito migration/relinking
 
 After verifying the person through a support-controlled recovery process, locate their stable User UUID, disable the retired issuer/subject link, and create an `IdentityLink` for the new issuer/subject. Refresh the User email from the new verified claim. Do not link accounts merely because emails match. Ownership rows and `users/{User.id}/...` S3 paths remain untouched.
 
-## Current implementation note
+## Sync behavior
 
-The frontend provides the authenticated workspace shell and local recovery behavior. The generated workspace Lambda currently documents, but does not yet implement, the DynamoDB/S3 repository required for cloud object operations; it deliberately throws rather than weakening authorization. Complete that repository and its isolation/conflict tests before production deployment.
+The browser loads workspace metadata and scenes from AppSync. Autosaves are serialized and carry a revision; a revision mismatch presents reload-cloud and save-as-copy choices. Local storage is used only for the current drawing when a cloud save fails, then retried when connectivity returns. Scene and uploaded byte payloads are limited to 5 MB by the backend.

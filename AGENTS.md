@@ -1,4 +1,4 @@
-# SketchVault agent guide
+# excalidraw-cloud-starter agent guide
 
 Read `docs/decisions/` before changing identity, authorization, storage, folders, scenes, or synchronization. Application UUIDs are permanent ownership keys; Cognito subjects and email are not. Never grant browser principals access to stable-ID S3 paths or accept an owner ID from the browser.
 

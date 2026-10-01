@@ -4,7 +4,7 @@
 Direct model owner rules use Cognito identity claims, not the stable application user ID.
 
 ## Decision
-Models are Lambda-resource-only. Authenticated browser callers use custom operations; the operation validates its token and the handler resolves `IdentityLink` before every read or mutation.
+Models use a backend-only `workspace-service` group rule; ordinary users are never assigned to it. Authenticated browser callers use custom operations; the operation validates its token and the handler resolves `IdentityLink` before every read or mutation.
 
 ## Reason
 This prevents a browser-supplied `ownerUserId` from becoming an authorization decision.

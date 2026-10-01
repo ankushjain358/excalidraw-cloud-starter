@@ -128,3 +128,68 @@
     @apply font-sans;
     }
 }
+
+.auth-page {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top, oklch(0.92 0.04 265), transparent 38rem),
+    oklch(0.17 0.02 265);
+}
+
+.auth-card {
+  width: min(100%, 27rem);
+  overflow: hidden;
+  border: 1px solid oklch(1 0 0 / 12%);
+  border-radius: 1rem;
+  background: oklch(0.985 0 0);
+  box-shadow: 0 2rem 5rem oklch(0 0 0 / 35%);
+}
+
+.auth-card [data-amplify-authenticator] {
+  --amplify-components-authenticator-router-box-shadow: none;
+  --amplify-components-authenticator-router-border-width: 0;
+  --amplify-components-button-primary-background-color: oklch(0.205 0 0);
+  --amplify-components-button-primary-hover-background-color: oklch(0.32 0 0);
+  --amplify-components-fieldcontrol-border-color: oklch(0.88 0 0);
+  --amplify-components-fieldcontrol-focus-border-color: oklch(0.45 0 0);
+  --amplify-components-tabs-item-active-border-color: oklch(0.205 0 0);
+  --amplify-components-tabs-item-active-color: oklch(0.145 0 0);
+  --amplify-components-tabs-item-color: oklch(0.5 0 0);
+}
+
+.auth-card [data-amplify-router] {
+  padding: 0 1.75rem 1.75rem;
+}
+
+.auth-card [data-amplify-button] {
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.auth-card [data-amplify-field-control] {
+  border-radius: 0.5rem;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.75rem 1.75rem 1.25rem;
+}
+
+.auth-mark {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: oklch(0.205 0 0);
+  color: oklch(0.985 0 0);
+  font-weight: 700;
+}
+
+.auth-brand p { font-size: 0.95rem; font-weight: 650; letter-spacing: -0.02em; }
+.auth-brand span { font-size: 0.8125rem; color: oklch(0.5 0 0); }
