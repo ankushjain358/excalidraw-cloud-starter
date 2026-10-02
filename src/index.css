@@ -190,14 +190,11 @@
 }
 
 .auth-mark {
-  display: grid;
   width: 2.5rem;
   height: 2.5rem;
-  place-items: center;
   border-radius: 0.75rem;
-  background: oklch(0.205 0 0);
-  color: oklch(0.985 0 0);
-  font-weight: 700;
+  object-fit: cover;
+  background: white;
 }
 
 .auth-brand p { font-size: 0.95rem; font-weight: 650; letter-spacing: -0.02em; }
