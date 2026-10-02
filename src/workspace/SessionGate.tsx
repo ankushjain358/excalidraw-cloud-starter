@@ -1,9 +1,10 @@
 import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import WorkspaceApp from './WorkspaceApp';
+import logoUrl from '../assets/logo.png';
 function AuthenticatorHeader() {
   return (
     <div className="auth-brand">
-      <img src="/src/assets/logo.png" alt="logo" className="auth-mark" />
+      <img src={logoUrl} alt="logo" className="auth-mark" />
       <div>
         <p>excalidraw-cloud-starter</p>
         <span>Your private drawing workspace</span>

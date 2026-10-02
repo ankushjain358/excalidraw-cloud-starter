@@ -1,5 +1,6 @@
 import { Cloud, FolderOpen, Lock, RefreshCw, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logoUrl from '../assets/logo.png';
 
 const GITHUB_URL = 'https://github.com/ankushjain358/excalidraw-cloud-starter';
 
@@ -37,7 +38,7 @@ export function LandingPage({ onLaunch }: Props) {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-6">
           <div className="flex items-center gap-2.5">
-            <img src="/src/assets/logo.png" alt="logo" className="size-8 rounded-lg bg-white" />
+            <img src={logoUrl} alt="logo" className="size-8 rounded-lg bg-white" />
             <span className="font-semibold tracking-tight">excalidraw-cloud-starter</span>
           </div>
           <nav className="ml-auto flex items-center gap-3">
