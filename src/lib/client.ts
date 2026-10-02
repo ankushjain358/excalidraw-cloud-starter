@@ -24,7 +24,6 @@ export type WorkspaceFile = {
   updatedAt: string;
 };
 
-export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error';
+export type SaveStatus = 'saved' | 'saving' | 'error';
 
 export const blankScene = { type: 'excalidraw', version: 2, source: 'excalidraw-cloud-starter', elements: [], appState: {}, files: {} };
-export const recoveryKey = (id: string) => `excalidraw-cloud-starter:recovery:${id}`;

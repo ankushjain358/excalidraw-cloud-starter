@@ -127,6 +127,9 @@
   html {
     @apply font-sans;
     }
+  button:not(:disabled) {
+    cursor: pointer;
+    }
 }
 
 .auth-page {
@@ -158,10 +161,16 @@
   --amplify-components-tabs-item-active-border-color: oklch(0.205 0 0);
   --amplify-components-tabs-item-active-color: oklch(0.145 0 0);
   --amplify-components-tabs-item-color: oklch(0.5 0 0);
+  width: 100%;
+}
+
+.auth-card [data-amplify-authenticator] > * {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .auth-card [data-amplify-router] {
-  padding: 0 1.75rem 1.75rem;
+  padding: 0 1rem 1rem;
 }
 
 .auth-card [data-amplify-button] {
@@ -177,7 +186,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1.75rem 1.75rem 1.25rem;
+  padding: 1rem 1rem 1.25rem;
 }
 
 .auth-mark {

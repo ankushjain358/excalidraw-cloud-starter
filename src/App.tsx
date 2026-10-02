@@ -48,11 +48,9 @@ export default function App() {
           drawing={editor.active}
           scene={editor.scene}
           saveStatus={editor.saveStatus}
-          dirty={editor.dirty}
-          hasConflict={!!editor.conflict}
           dark={dark}
           editorApiRef={editor.api}
-          onClose={() => editor.closeDrawing(editor.dirty)}
+          onClose={editor.closeDrawing}
           onSave={editor.save}
           onRename={async (name) => {
             const updated = await workspace.renameDrawing(editor.active!, name);
@@ -60,8 +58,6 @@ export default function App() {
           }}
           onDelete={editor.deleteActive}
           onExport={handleExport}
-          onChange={editor.scheduleSave}
-          onResolveConflict={(action) => editor.resolveConflict(action, workspace.createDrawing)}
         />
         <Toaster />
       </main>
@@ -74,6 +70,7 @@ export default function App() {
         folders={workspace.folders}
         drawings={workspace.drawings}
         loading={workspace.loading}
+        opening={editor.opening}
         dark={dark}
         onToggleDark={() => setDark((d) => !d)}
         onOpenDrawing={editor.openDrawing}

@@ -7,7 +7,7 @@ const schema = a.schema({
     id: a.id().required(),
     email: a.email(),
   }).identifier(['id']).authorization((allow) => [allow.authenticated()]),
-
+  
   IdentityLink: a.model({
     id: a.id().required(),
     userId: a.id().required(),
