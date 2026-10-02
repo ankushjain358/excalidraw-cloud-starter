@@ -5,8 +5,11 @@ import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import '@excalidraw/excalidraw/index.css';
 import './index.css';
+import outputs from '../amplify_outputs.json';
 import { LandingPage } from './landing/LandingPage';
-import { SessionGate, SetupRequired } from './workspace/SessionGate';
+import { SessionGate } from './workspace/SessionGate';
+
+Amplify.configure(outputs);
 
 function Root() {
   const [page, setPage] = useState<'landing' | 'app'>(
@@ -18,7 +21,6 @@ function Root() {
     setPage('app');
   };
 
-  // Handle browser back/forward
   useEffect(() => {
     const onHash = () => setPage(window.location.hash === '#app' ? 'app' : 'landing');
     window.addEventListener('hashchange', onHash);
@@ -29,25 +31,10 @@ function Root() {
   return <LandingPage onLaunch={launch} />;
 }
 
-async function start() {
-  try {
-    const response = await fetch('/amplify_outputs.json');
-    if (!response.ok) throw new Error('No Amplify outputs');
-    Amplify.configure(await response.json());
-    createRoot(document.getElementById('root')!).render(
-      <StrictMode>
-        <Authenticator.Provider>
-          <Root />
-        </Authenticator.Provider>
-      </StrictMode>,
-    );
-  } catch {
-    createRoot(document.getElementById('root')!).render(
-      <StrictMode>
-        <SetupRequired />
-      </StrictMode>,
-    );
-  }
-}
-
-void start();
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <Authenticator.Provider>
+      <Root />
+    </Authenticator.Provider>
+  </StrictMode>,
+);
