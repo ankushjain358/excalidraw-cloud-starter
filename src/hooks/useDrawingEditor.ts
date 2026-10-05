@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { serializeAsJSON } from '@excalidraw/excalidraw';
 import { toast } from 'sonner';
-import { client, blankScene } from '../lib/client';
+import { client, blankScene, toWorkspaceFile } from '../lib/client';
 import type { WorkspaceFile, SaveStatus } from '../lib/client';
 
 export function useDrawingEditor(
@@ -50,7 +50,8 @@ export function useDrawingEditor(
     try {
       const { data, errors } = await client.queries.loadDrawing({ fileId: drawing.id });
       if (errors?.length) throw new Error(errors[0].message);
-      const { file, scene: loadedScene } = data!;
+      const { file: responseFile, scene: loadedScene } = data!;
+      const file = toWorkspaceFile(responseFile);
       const parsedScene = typeof loadedScene === 'string' ? JSON.parse(loadedScene) : loadedScene;
       if (!parsedScene || typeof parsedScene !== 'object' || Array.isArray(parsedScene)) {
         throw new Error('Saved drawing data is invalid.');

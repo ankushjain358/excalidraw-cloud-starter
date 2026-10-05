@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { client, blankScene } from '../lib/client';
+import { client, blankScene, toWorkspaceFile } from '../lib/client';
 import type { Folder, WorkspaceFile } from '../lib/client';
 
 const toFolder = (x: any): Folder => x as Folder;
@@ -50,7 +50,7 @@ export function useWorkspace() {
       name, folderId: folderId ?? undefined, scene: JSON.stringify(scene) as never,
     });
     if (errors?.length) { toast.error(errors[0].message); return null; }
-    const file = data!;
+    const file = toWorkspaceFile(data);
     setDrawings((prev) => [file, ...prev]);
     return file;
   }, []);
