@@ -8,6 +8,7 @@ import { EditorView } from './components/EditorView';
 
 export default function App() {
   const [dark, setDark] = useState(false);
+  const [folderId, setFolderId] = useState<string | null>(null);
   const workspace = useWorkspace();
   const editor = useDrawingEditor(workspace.updateDrawing, workspace.removeDrawing);
 
@@ -51,11 +52,14 @@ export default function App() {
           dark={dark}
           editorApiRef={editor.api}
           onClose={editor.closeDrawing}
-          onSave={editor.save}
           onRename={async (name) => {
-            const updated = await workspace.renameDrawing(editor.active!, name);
-            editor.setActive(updated);
+            const current = editor.active;
+            if (!current) return false;
+            const updated = await workspace.renameDrawing(current, name);
+            editor.updateActiveDrawing(updated);
+            return updated.name === name.trim();
           }}
+          onSave={editor.save}
           onDelete={editor.deleteActive}
           onExport={handleExport}
         />
@@ -72,11 +76,13 @@ export default function App() {
         loading={workspace.loading}
         opening={editor.opening}
         dark={dark}
+        folderId={folderId}
+        onFolderChange={setFolderId}
         onToggleDark={() => setDark((d) => !d)}
         onOpenDrawing={editor.openDrawing}
-        onCreateDrawing={() => workspace.createDrawing('Untitled drawing', null)}
+        onCreateDrawing={() => workspace.createDrawing('Untitled drawing', folderId)}
         onImportDrawing={handleImport}
-        onCreateFolder={() => workspace.createFolder(null)}
+        onCreateFolder={() => workspace.createFolder(folderId)}
         onDeleteFolder={(folder) => workspace.deleteFolder(folder, workspace.drawings)}
       />
       <Toaster />

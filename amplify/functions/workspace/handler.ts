@@ -39,7 +39,7 @@ export const handler = async (event: Event) => {
       const file = { id, folderId: args.folderId ?? undefined, name: (args.name as string).trim(), itemType: 'DRAWING', s3Key, contentType: 'application/json', size: Buffer.byteLength(body), revision: 0, owner: sub, createdAt: ts, updatedAt: ts };
       await s3.send(new PutObjectCommand({ Bucket: bucket(), Key: s3Key, Body: body, ContentType: 'application/json' }));
       await db.send(new PutCommand({ TableName: table('WorkspaceFile'), Item: file }));
-      return JSON.stringify(file);
+      return file;
     }
 
     if (fieldName === 'loadDrawing') {
@@ -48,7 +48,7 @@ export const handler = async (event: Event) => {
       const file = existing.Item;
       if (!file || file.itemType !== 'DRAWING') throw new Error('Drawing not found.');
       if (file.owner !== sub) throw new Error('Drawing not found.');
-      return JSON.stringify({ file, scene: JSON.parse(await s3Text(file.s3Key)) });
+      return { file, scene: JSON.parse(await s3Text(file.s3Key)) };
     }
 
     if (fieldName === 'saveDrawing') {
@@ -72,7 +72,7 @@ export const handler = async (event: Event) => {
         ExpressionAttributeNames: { '#owner': 'owner' },
         ExpressionAttributeValues: { ':next': revision, ':updated': updatedAt, ':key': s3Key, ':size': Buffer.byteLength(body), ':expected': expectedRevision, ':owner': sub },
       }));
-      return JSON.stringify({ revision, updatedAt });
+      return { revision, updatedAt };
     }
 
     throw new Error(`Unsupported operation: ${fieldName}`);

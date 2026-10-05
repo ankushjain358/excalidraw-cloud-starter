@@ -22,6 +22,12 @@ export function useDrawingEditor(
       : scene,
   [scene]);
 
+  const updateActiveDrawing = useCallback((drawing: WorkspaceFile) => {
+    if (activeRef.current?.id !== drawing.id) return;
+    activeRef.current = drawing;
+    setActive(drawing);
+  }, []);
+
   const save = useCallback(async () => {
     const current = activeRef.current;
     if (!current || !api.current) return;
@@ -31,7 +37,7 @@ export function useDrawingEditor(
       fileId: current.id, expectedRevision: current.revision, scene: JSON.stringify(localScene) as never,
     });
     if (errors?.length) { setSaveStatus('error'); toast.error(errors[0].message); return; }
-    const { revision, updatedAt } = JSON.parse(data!) as { revision: number; updatedAt: string };
+    const { revision, updatedAt } = data!;
     const next = { ...current, revision, updatedAt };
     activeRef.current = next;
     setActive(next);
@@ -44,10 +50,14 @@ export function useDrawingEditor(
     try {
       const { data, errors } = await client.queries.loadDrawing({ fileId: drawing.id });
       if (errors?.length) throw new Error(errors[0].message);
-      const { file, scene: loadedScene } = JSON.parse(data!) as { file: WorkspaceFile; scene: unknown };
+      const { file, scene: loadedScene } = data!;
+      const parsedScene = typeof loadedScene === 'string' ? JSON.parse(loadedScene) : loadedScene;
+      if (!parsedScene || typeof parsedScene !== 'object' || Array.isArray(parsedScene)) {
+        throw new Error('Saved drawing data is invalid.');
+      }
       activeRef.current = file;
       setActive(file);
-      setScene(loadedScene);
+      setScene(parsedScene);
       setSaveStatus('saved');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to load drawing.');
@@ -68,5 +78,5 @@ export function useDrawingEditor(
     activeRef.current = null;
   }, [onDrawingDeleted]);
 
-  return { active, scene, saveStatus, opening, api, openDrawing, closeDrawing, save, deleteActive, setActive };
+  return { active, scene, saveStatus, opening, api, openDrawing, closeDrawing, save, deleteActive, updateActiveDrawing };
 }

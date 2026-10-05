@@ -50,7 +50,7 @@ export function useWorkspace() {
       name, folderId: folderId ?? undefined, scene: JSON.stringify(scene) as never,
     });
     if (errors?.length) { toast.error(errors[0].message); return null; }
-    const file = JSON.parse(data!) as WorkspaceFile;
+    const file = data!;
     setDrawings((prev) => [file, ...prev]);
     return file;
   }, []);

@@ -52,11 +52,14 @@ export default function App() {
           dark={dark}
           editorApiRef={editor.api}
           onClose={editor.closeDrawing}
-          onSave={editor.save}
           onRename={async (name) => {
-            const updated = await workspace.renameDrawing(editor.active!, name);
-            editor.setActive(updated);
+            const current = editor.active;
+            if (!current) return false;
+            const updated = await workspace.renameDrawing(current, name);
+            editor.updateActiveDrawing(updated);
+            return updated.name === name.trim();
           }}
+          onSave={editor.save}
           onDelete={editor.deleteActive}
           onExport={handleExport}
         />

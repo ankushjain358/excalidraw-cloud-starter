@@ -47,10 +47,10 @@ Folder and file CRUD go directly through the model client. The Lambda handles on
 | `createDrawing` | Generates S3 key, writes scene bytes, writes DynamoDB row |
 | `loadDrawing` | Reads scene bytes from S3 |
 | `saveDrawing` | Writes new revision to S3, conditional DynamoDB update |
-| `writeFileBytes` | Writes uploaded file bytes to S3, writes DynamoDB row |
-| `readFileBytes` | Reads file bytes from S3, returns base64 |
 
 The Lambda reads `identity.sub` directly from the AppSync event to namespace S3 keys: `users/{sub}/items/{file-id}/revisions/{revision}`.
+
+Lambda-backed operations with structured responses declare `a.customType()` return types and return plain objects. Keep JSON serialization for scene content separate from the operation response envelope.
 
 ## Folder and Drawing Relationship
 
@@ -67,6 +67,8 @@ Scenes are stored as complete `serializeAsJSON` payloads in S3. Each save writes
 Autosave debounces at 900 ms and serializes saves through a promise chain. Each save carries `expectedRevision`. On a revision mismatch the Lambda returns `CONFLICT:{revision}`, the local scene is written to `localStorage` as a recovery record, and the UI offers two choices: reload cloud or save as copy. On reconnect, any pending recovery record is retried automatically.
 
 Save status states: `saving` → `saved` | `offline` | `error`.
+
+Drawing titles are committed when the title input loses focus. The Save button also commits any pending title change before saving the scene; concurrent blur and Save commits share one rename request.
 
 ## Local Setup
 

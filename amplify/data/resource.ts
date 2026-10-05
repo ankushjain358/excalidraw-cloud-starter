@@ -8,6 +8,29 @@ export const workspace = defineFunction({ entry: '../functions/workspace/handler
 // On list/get — AppSync injects a filter: owner = <calling user's identity>, so users only see their own records.
 // On update/delete — AppSync enforces owner = <calling user's identity> as a condition expression.
 const schema = a.schema({
+  WorkspaceFileResult: a.customType({
+    id: a.id().required(),
+    folderId: a.id(),
+    name: a.string().required(),
+    itemType: a.enum(['DRAWING', 'UPLOAD']),
+    s3Key: a.string().required(),
+    contentType: a.string(),
+    size: a.integer(),
+    revision: a.integer().required(),
+    createdAt: a.string().required(),
+    updatedAt: a.string().required(),
+  }),
+
+  DrawingResult: a.customType({
+    file: a.ref('WorkspaceFileResult').required(),
+    scene: a.json().required(),
+  }),
+
+  SaveResult: a.customType({
+    revision: a.integer().required(),
+    updatedAt: a.string().required(),
+  }),
+
   Folder: a.model({
     parentFolderId: a.id(),
     name: a.string().required(),
@@ -25,19 +48,19 @@ const schema = a.schema({
 
   createDrawing: a.mutation()
     .arguments({ name: a.string().required(), folderId: a.id(), scene: a.json().required() })
-    .returns(a.string().required())
+    .returns(a.ref('WorkspaceFileResult').required())
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(workspace)),
 
   saveDrawing: a.mutation()
     .arguments({ fileId: a.id().required(), expectedRevision: a.integer().required(), scene: a.json().required() })
-    .returns(a.string().required())
+    .returns(a.ref('SaveResult').required())
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(workspace)),
 
   loadDrawing: a.query()
     .arguments({ fileId: a.id().required() })
-    .returns(a.string().required())
+    .returns(a.ref('DrawingResult').required())
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(workspace)),
 
