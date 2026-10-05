@@ -8,6 +8,7 @@ import { EditorView } from '../components/EditorView';
 
 export default function App() {
   const [dark, setDark] = useState(false);
+  const [folderId, setFolderId] = useState<string | null>(null);
   const workspace = useWorkspace();
   const editor = useDrawingEditor(workspace.updateDrawing, workspace.removeDrawing);
 
@@ -74,9 +75,11 @@ export default function App() {
         dark={dark}
         onToggleDark={() => setDark((d) => !d)}
         onOpenDrawing={editor.openDrawing}
-        onCreateDrawing={() => workspace.createDrawing('Untitled drawing', null)}
+        folderId={folderId}
+        onFolderChange={setFolderId}
+        onCreateDrawing={() => workspace.createDrawing('Untitled drawing', folderId)}
         onImportDrawing={handleImport}
-        onCreateFolder={() => workspace.createFolder(null)}
+        onCreateFolder={() => workspace.createFolder(folderId)}
         onDeleteFolder={(folder) => workspace.deleteFolder(folder, workspace.drawings)}
       />
       <Toaster />

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Private, cloud-synced Excalidraw workspaces built with React, Vite, Amplify Gen 2, S3, and shadcn/ui. All authenticated users share a single data space — isolation relies on users not knowing each other's resource IDs, not on enforced ownership rules.
+Private, cloud-synced Excalidraw workspaces built with React, Vite, Amplify Gen 2, S3, and shadcn/ui. Each user can only see and modify their own folders and drawings — enforced at the AppSync layer via Amplify owner-based authorization.
 
 ## Architecture
 
@@ -10,12 +10,12 @@ Private, cloud-synced Excalidraw workspaces built with React, Vite, Amplify Gen 
 - `src/lib/client.ts` — Amplify `generateClient` instance and shared local types
 - `src/hooks/useWorkspace.ts` — folder and drawing CRUD via direct Amplify model client (ORM style)
 - `src/hooks/useDrawingEditor.ts` — active drawing state, autosave, conflict resolution, offline retry
-- `src/components/WorkspaceView.tsx` — sidebar + drawing grid
+- `src/workspace/WorkspaceApp.tsx` — top-level app shell; owns `folderId` state and wires workspace + editor
+- `src/components/WorkspaceView.tsx` — sidebar + drawing grid; receives `folderId` and `onFolderChange` as props
 - `src/components/EditorView.tsx` — editor header + Excalidraw canvas
-- `src/App.tsx` — thin shell composing the two views
 
 ### Backend
-- `amplify/data/resource.ts` — Amplify Gen 2 schema; all models use `allow.authenticated()`
+- `amplify/data/resource.ts` — Amplify Gen 2 schema; `Folder` and `WorkspaceFile` use `allow.owner()`
 - `amplify/functions/workspace/handler.ts` — Lambda for S3-backed operations only
 - `amplify/backend.ts` — table grants and environment variables for the Lambda
 - `amplify/storage/resource.ts` — S3 bucket; browser access denied, Lambda-only
@@ -24,10 +24,19 @@ Private, cloud-synced Excalidraw workspaces built with React, Vite, Amplify Gen 
 
 All models get `id`, `createdAt`, and `updatedAt` automatically from Amplify.
 
-- `User` — stable application UUID, email
-- `IdentityLink` — maps Cognito `issuer + subject` → `User.id`; GSI on `issuer + subject`
-- `Folder` — `name`, nullable `parentFolderId`
-- `WorkspaceFile` — `name`, `itemType` (DRAWING | UPLOAD), `folderId`, `s3Key`, `revision`, `size`, `contentType`
+- `Folder` — `name`, nullable `parentFolderId`; `owner` is added automatically by Amplify
+- `WorkspaceFile` — `name`, `itemType` (DRAWING | UPLOAD), `folderId`, `s3Key`, `revision`, `size`, `contentType`; `owner` is added automatically by Amplify
+
+## Authorization
+
+`Folder` and `WorkspaceFile` use `allow.owner()`. Amplify automatically:
+
+- Adds an `owner` field (String) to the DynamoDB table — no need to declare it in the schema
+- On create — auto-populates `owner` with `{cognito_user_pool_id}::{username}` (the Cognito `sub`)
+- On list/get — AppSync injects a filter condition `owner = <calling user's identity>`, so users only ever receive their own records
+- On update/delete — AppSync enforces `owner = <calling user's identity>` as a condition expression
+
+No application-level filtering is needed in the frontend. The `User` and `IdentityLink` tables from earlier designs have been removed — the Cognito `sub` is the sole user identity.
 
 ## Lambda-backed Operations
 
@@ -41,11 +50,13 @@ Folder and file CRUD go directly through the model client. The Lambda handles on
 | `writeFileBytes` | Writes uploaded file bytes to S3, writes DynamoDB row |
 | `readFileBytes` | Reads file bytes from S3, returns base64 |
 
-## Identity and Migration
+The Lambda reads `identity.sub` directly from the AppSync event to namespace S3 keys: `users/{sub}/items/{file-id}/revisions/{revision}`.
 
-`User.id` is a stable generated UUID. On every S3-backed Lambda call, `resolveUserId` looks up the `IdentityLink` GSI by `issuer + subject`. If no link exists, a new `User` and `IdentityLink` are provisioned. S3 keys are namespaced `users/{User.id}/items/{file-id}/revisions/{revision}`.
+## Folder and Drawing Relationship
 
-For account recovery: locate the stable `User.id`, disable the old `IdentityLink`, create a new one for the new issuer/subject. S3 paths and ownership rows are untouched. Do not link accounts based on matching email alone.
+- A `Folder` belongs to a user (via `owner`) and has an optional `parentFolderId` for future nesting support (not yet surfaced in the UI).
+- A `WorkspaceFile` has an optional `folderId` linking it to a folder. `null` means root (All drawings).
+- The active folder selection (`folderId`) is owned by `WorkspaceApp` and passed down to `WorkspaceView` as a controlled prop, so `onCreateDrawing` and `onCreateFolder` always receive the correct context.
 
 ## Scene Storage
 

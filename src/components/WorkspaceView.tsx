@@ -11,6 +11,8 @@ type Props = {
   loading: boolean;
   opening: boolean;
   dark: boolean;
+  folderId: string | null;
+  onFolderChange: (id: string | null) => void;
   onToggleDark: () => void;
   onOpenDrawing: (drawing: WorkspaceFile) => void;
   onCreateDrawing: () => void;
@@ -20,12 +22,11 @@ type Props = {
 };
 
 export function WorkspaceView({
-  folders, drawings, loading, opening, dark, onToggleDark,
+  folders, drawings, loading, opening, dark, folderId, onFolderChange, onToggleDark,
   onOpenDrawing, onCreateDrawing, onImportDrawing,
   onCreateFolder, onDeleteFolder,
 }: Props) {
   const { signOut } = useAuthenticator((ctx) => [ctx.signOut]);
-  const [folderId, setFolderId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [openingId, setOpeningId] = useState<string | null>(null);
 
@@ -62,7 +63,7 @@ export function WorkspaceView({
           </div>
           <button
             className={`mb-1 w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm ${folderId === null ? 'bg-accent font-medium' : 'hover:bg-muted'}`}
-            onClick={() => setFolderId(null)}
+            onClick={() => onFolderChange(null)}
           >
             All drawings
           </button>
@@ -70,7 +71,7 @@ export function WorkspaceView({
             <div className="group flex items-center" key={folder.id}>
               <button
                 className={`w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm ${folderId === folder.id ? 'bg-accent font-medium' : 'hover:bg-muted'}`}
-                onClick={() => setFolderId(folder.id)}
+                onClick={() => onFolderChange(folder.id)}
               >
                 {folder.name}
               </button>

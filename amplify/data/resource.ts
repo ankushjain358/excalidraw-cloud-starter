@@ -2,23 +2,16 @@ import { type ClientSchema, a, defineData, defineFunction } from '@aws-amplify/b
 
 export const workspace = defineFunction({ entry: '../functions/workspace/handler.ts', resourceGroupName: 'data' });
 
+// How allow.owner() works:
+// Amplify Gen 2 automatically adds an `owner` field (String) to the DynamoDB table.
+// On create  — auto-populates `owner` with `{cognito_user_pool_id}::{username}` (the Cognito sub).
+// On list/get — AppSync injects a filter: owner = <calling user's identity>, so users only see their own records.
+// On update/delete — AppSync enforces owner = <calling user's identity> as a condition expression.
 const schema = a.schema({
-  User: a.model({
-    id: a.id().required(),
-    email: a.email(),
-  }).identifier(['id']).authorization((allow) => [allow.authenticated()]),
-  
-  IdentityLink: a.model({
-    id: a.id().required(),
-    userId: a.id().required(),
-    issuer: a.string().required(),
-    subject: a.string().required(),
-  }).identifier(['id']).secondaryIndexes((index) => [index('issuer').sortKeys(['subject'])]).authorization((allow) => [allow.authenticated()]),
-
   Folder: a.model({
     parentFolderId: a.id(),
     name: a.string().required(),
-  }).authorization((allow) => [allow.authenticated()]),
+  }).authorization((allow) => [allow.owner()]),
 
   WorkspaceFile: a.model({
     folderId: a.id(),
@@ -28,7 +21,7 @@ const schema = a.schema({
     contentType: a.string(),
     size: a.integer(),
     revision: a.integer().required(),
-  }).authorization((allow) => [allow.authenticated()]),
+  }).authorization((allow) => [allow.owner()]),
 
   createDrawing: a.mutation()
     .arguments({ name: a.string().required(), folderId: a.id(), scene: a.json().required() })
@@ -48,17 +41,6 @@ const schema = a.schema({
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(workspace)),
 
-  readFileBytes: a.query()
-    .arguments({ fileId: a.id().required() })
-    .returns(a.string().required())
-    .authorization((allow) => [allow.authenticated()])
-    .handler(a.handler.function(workspace)),
-
-  writeFileBytes: a.mutation()
-    .arguments({ name: a.string().required(), folderId: a.id(), contentType: a.string().required(), base64: a.string().required() })
-    .returns(a.string().required())
-    .authorization((allow) => [allow.authenticated()])
-    .handler(a.handler.function(workspace)),
 });
 
 export type Schema = ClientSchema<typeof schema>;

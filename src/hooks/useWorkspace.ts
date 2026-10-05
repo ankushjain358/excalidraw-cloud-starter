@@ -34,16 +34,15 @@ export function useWorkspace() {
   }, []);
 
   const deleteFolder = useCallback(async (folder: Folder, currentDrawings: WorkspaceFile[]) => {
-    if (!confirm(`Delete folder "${folder.name}"? Drawings will move to All drawings.`)) return;
-    await Promise.all(
-      currentDrawings
-        .filter((d) => d.folderId === folder.id)
-        .map((d) => client.models.WorkspaceFile.update({ id: d.id, folderId: undefined } as any))
-    );
+    const children = currentDrawings.filter((d) => d.folderId === folder.id);
+    if (children.length > 0) {
+      toast.error(`Move or delete the ${children.length} drawing${children.length > 1 ? 's' : ''} inside "${folder.name}" before deleting it.`);
+      return;
+    }
+    if (!confirm(`Delete folder "${folder.name}"?`)) return;
     const { errors } = await client.models.Folder.delete({ id: folder.id });
     if (errors?.length) { toast.error(errors[0].message); return; }
     setFolders((prev) => prev.filter((f) => f.id !== folder.id));
-    setDrawings((prev) => prev.map((d) => d.folderId === folder.id ? { ...d, folderId: null } : d));
   }, []);
 
   const createDrawing = useCallback(async (name: string, folderId: string | null, scene: unknown = blankScene): Promise<WorkspaceFile | null> => {
