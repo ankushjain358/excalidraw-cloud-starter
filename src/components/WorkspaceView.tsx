@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { FolderPlus, Loader2, Moon, Plus, Sun, Trash2, FileUp } from 'lucide-react';
+import { FolderPlus, Loader2, Moon, Pencil, Plus, Sun, Trash2, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import type { Folder, WorkspaceFile } from '../lib/client';
@@ -18,17 +21,21 @@ type Props = {
   onCreateDrawing: () => void;
   onImportDrawing: (file: File) => void;
   onCreateFolder: () => void;
+  onRenameFolder: (folder: Folder, name: string) => Promise<boolean> | boolean;
   onDeleteFolder: (folder: Folder) => void;
 };
 
 export function WorkspaceView({
   folders, drawings, loading, opening, dark, folderId, onFolderChange, onToggleDark,
   onOpenDrawing, onCreateDrawing, onImportDrawing,
-  onCreateFolder, onDeleteFolder,
+  onCreateFolder, onRenameFolder, onDeleteFolder,
 }: Props) {
   const { signOut } = useAuthenticator((ctx) => [ctx.signOut]);
   const [query, setQuery] = useState('');
   const [openingId, setOpeningId] = useState<string | null>(null);
+  const [renamingFolder, setRenamingFolder] = useState<Folder | null>(null);
+  const [folderName, setFolderName] = useState('');
+  const [savingFolderName, setSavingFolderName] = useState(false);
 
   const visible = drawings.filter(
     (d) => (d.folderId ?? null) === folderId && d.name.toLowerCase().includes(query.toLowerCase())
@@ -40,6 +47,18 @@ export function WorkspaceView({
     setOpeningId(drawing.id);
     await onOpenDrawing(drawing);
     setOpeningId(null);
+  };
+
+  const handleRenameFolder = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = folderName.trim();
+    if (!renamingFolder || !name || savingFolderName) return;
+    setSavingFolderName(true);
+    try {
+      if (await onRenameFolder(renamingFolder, name)) setRenamingFolder(null);
+    } finally {
+      setSavingFolderName(false);
+    }
   };
 
   return (
@@ -70,18 +89,27 @@ export function WorkspaceView({
           {folders.map((folder) => (
             <div className="group flex items-center" key={folder.id}>
               <button
-                className={`w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm ${folderId === folder.id ? 'bg-accent font-medium' : 'hover:bg-muted'}`}
+                className={`min-w-0 flex-1 cursor-pointer truncate rounded-md px-3 py-2 text-left text-sm ${folderId === folder.id ? 'bg-accent font-medium' : 'hover:bg-muted'}`}
                 onClick={() => onFolderChange(folder.id)}
               >
                 {folder.name}
               </button>
-              <Button
-                className="invisible group-hover:visible" variant="ghost" size="icon"
-                disabled={busy}
-                onClick={() => onDeleteFolder(folder)} aria-label={`Delete ${folder.name}`}
-              >
-                <Trash2 />
-              </Button>
+              <div className="flex shrink-0">
+                <Button
+                  className="sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100" variant="ghost" size="icon"
+                  disabled={busy}
+                  onClick={() => { setRenamingFolder(folder); setFolderName(folder.name); }} aria-label={`Rename ${folder.name}`}
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  className="sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100" variant="ghost" size="icon"
+                  disabled={busy}
+                  onClick={() => onDeleteFolder(folder)} aria-label={`Delete ${folder.name}`}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
             </div>
           ))}
         </aside>
@@ -143,6 +171,34 @@ export function WorkspaceView({
           )}
         </section>
       </div>
+
+      <Dialog
+        open={renamingFolder !== null}
+        onOpenChange={(open) => { if (!open && !savingFolderName) setRenamingFolder(null); }}
+      >
+        <DialogContent>
+          <form onSubmit={handleRenameFolder}>
+            <DialogHeader>
+              <DialogTitle>Rename folder</DialogTitle>
+              <DialogDescription>Choose a new name for “{renamingFolder?.name}”.</DialogDescription>
+            </DialogHeader>
+            <Input
+              autoFocus
+              className="my-4"
+              aria-label="Folder name"
+              value={folderName}
+              onChange={(event) => setFolderName(event.target.value)}
+              maxLength={100}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setRenamingFolder(null)} disabled={savingFolderName}>Cancel</Button>
+              <Button type="submit" disabled={!folderName.trim() || savingFolderName}>
+                {savingFolderName ? <Loader2 className="animate-spin" /> : null}Save name
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

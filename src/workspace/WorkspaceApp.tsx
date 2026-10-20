@@ -83,6 +83,7 @@ export default function App() {
         onCreateDrawing={() => workspace.createDrawing('Untitled drawing', folderId)}
         onImportDrawing={handleImport}
         onCreateFolder={() => workspace.createFolder(folderId)}
+        onRenameFolder={workspace.renameFolder}
         onDeleteFolder={(folder) => workspace.deleteFolder(folder, workspace.drawings)}
       />
       <Toaster />

@@ -33,6 +33,17 @@ export function useWorkspace() {
     setFolders((prev) => [...prev, toFolder(data)].sort((a, b) => a.name.localeCompare(b.name)));
   }, []);
 
+  const renameFolder = useCallback(async (folder: Folder, name: string): Promise<boolean> => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    const { errors } = await client.models.Folder.update({ id: folder.id, name: trimmed });
+    if (errors?.length) { toast.error(errors[0].message); return false; }
+    setFolders((prev) => prev
+      .map((item) => item.id === folder.id ? { ...item, name: trimmed } : item)
+      .sort((a, b) => a.name.localeCompare(b.name)));
+    return true;
+  }, []);
+
   const deleteFolder = useCallback(async (folder: Folder, currentDrawings: WorkspaceFile[]) => {
     const children = currentDrawings.filter((d) => d.folderId === folder.id);
     if (children.length > 0) {
@@ -82,7 +93,7 @@ export function useWorkspace() {
 
   return {
     folders, drawings, loading,
-    refresh, createFolder, deleteFolder,
+    refresh, createFolder, renameFolder, deleteFolder,
     createDrawing, renameDrawing, deleteDrawing,
     updateDrawing, removeDrawing,
   };
