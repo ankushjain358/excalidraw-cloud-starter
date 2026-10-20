@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "generate-amplify-config": "npx ampx generate outputs --branch $VERCEL_GIT_COMMIT_REF  --app-id $AMPLIFY_APP_ID",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
