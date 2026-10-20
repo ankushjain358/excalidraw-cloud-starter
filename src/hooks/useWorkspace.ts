@@ -36,7 +36,7 @@ export function useWorkspace() {
   const renameFolder = useCallback(async (folder: Folder, name: string): Promise<boolean> => {
     const trimmed = name.trim();
     if (!trimmed) return false;
-    const { errors } = await client.models.Folder.update({ id: folder.id, name: trimmed });
+    const { errors } = await client.models.Folder.update({ id: folder.id, name: trimmed } as any);
     if (errors?.length) { toast.error(errors[0].message); return false; }
     setFolders((prev) => prev
       .map((item) => item.id === folder.id ? { ...item, name: trimmed } : item)
