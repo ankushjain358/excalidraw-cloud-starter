@@ -26,7 +26,7 @@ type Props = {
   onCreateFolder: () => void;
   onRenameFolder: (folder: Folder, name: string) => Promise<boolean> | boolean;
   onDeleteFolder: (folder: Folder) => void;
-  onMoveDrawing: (drawing: WorkspaceFile, folderId: string) => Promise<boolean> | boolean;
+  onMoveDrawing: (drawing: WorkspaceFile, folderId: string | null) => Promise<boolean> | boolean;
 };
 
 export function WorkspaceView({
@@ -67,7 +67,7 @@ export function WorkspaceView({
     }
   };
 
-  const handleMoveDrawing = async (targetFolderId: string) => {
+  const handleMoveDrawing = async (targetFolderId: string | null) => {
     if (!movingDrawing || savingMove) return;
     setSavingMove(true);
     try {
@@ -243,8 +243,19 @@ export function WorkspaceView({
             <DialogDescription>Choose a folder for “{movingDrawing?.name}”.</DialogDescription>
           </DialogHeader>
           <div className="max-h-72 space-y-1 overflow-y-auto">
+            {movingDrawing?.folderId && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full justify-start"
+                disabled={savingMove}
+                onClick={() => { void handleMoveDrawing(null); }}
+              >
+                <FolderIcon />All drawings
+              </Button>
+            )}
             {folders
-              .filter((folder) => folder.id !== movingDrawing?.folderId)
+              .filter((folder) => folder.id !== (movingDrawing?.folderId ?? null))
               .map((folder) => (
                 <Button
                   key={folder.id}
@@ -257,7 +268,7 @@ export function WorkspaceView({
                   <FolderIcon />{folder.name}
                 </Button>
               ))}
-            {folders.filter((folder) => folder.id !== movingDrawing?.folderId).length === 0 && (
+            {folders.filter((folder) => folder.id !== (movingDrawing?.folderId ?? null)).length === 0 && !movingDrawing?.folderId && (
               <p className="py-4 text-center text-sm text-muted-foreground">There are no other folders to move this drawing to.</p>
             )}
           </div>

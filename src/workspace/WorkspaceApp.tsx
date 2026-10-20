@@ -35,7 +35,7 @@ export default function App() {
     try {
       const scene = JSON.parse(await file.text());
       const name = file.name.replace(/\.excalidraw$/i, '') || 'Imported drawing';
-      const drawing = await workspace.createDrawing(name, null, scene);
+      const drawing = await workspace.createDrawing(name, folderId, scene);
       if (drawing) editor.openDrawing(drawing);
     } catch {
       toast.error('The selected file is not valid Excalidraw JSON.');

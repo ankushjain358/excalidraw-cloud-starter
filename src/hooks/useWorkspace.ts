@@ -75,7 +75,7 @@ export function useWorkspace() {
     return updated;
   }, []);
 
-  const moveDrawing = useCallback(async (drawing: WorkspaceFile, folderId: string): Promise<boolean> => {
+  const moveDrawing = useCallback(async (drawing: WorkspaceFile, folderId: string | null): Promise<boolean> => {
     const { errors } = await client.models.WorkspaceFile.update({ id: drawing.id, folderId } as any);
     if (errors?.length) { toast.error(errors[0].message); return false; }
     setDrawings((prev) => prev.map((item) => item.id === drawing.id ? { ...item, folderId } : item));
