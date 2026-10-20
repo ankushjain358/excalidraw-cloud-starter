@@ -64,6 +64,12 @@ const schema = a.schema({
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(workspace)),
 
+  deleteDrawing: a.mutation()
+    .arguments({ fileId: a.id().required() })
+    .returns(a.boolean().required())
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(workspace)),
+
 });
 
 export type Schema = ClientSchema<typeof schema>;

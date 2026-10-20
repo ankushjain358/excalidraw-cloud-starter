@@ -84,7 +84,7 @@ export function useWorkspace() {
 
   const deleteDrawing = useCallback(async (drawing: WorkspaceFile): Promise<boolean> => {
     if (!confirm(`Delete "${drawing.name}"?`)) return false;
-    const { errors } = await client.models.WorkspaceFile.delete({ id: drawing.id });
+    const { errors } = await client.mutations.deleteDrawing({ fileId: drawing.id });
     if (errors?.length) { toast.error(errors[0].message); return false; }
     setDrawings((prev) => prev.filter((d) => d.id !== drawing.id));
     return true;

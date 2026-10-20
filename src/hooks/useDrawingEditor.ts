@@ -72,7 +72,7 @@ export function useDrawingEditor(
   const deleteActive = useCallback(async () => {
     const current = activeRef.current;
     if (!current || !confirm(`Delete "${current.name}"?`)) return;
-    const { errors } = await client.models.WorkspaceFile.delete({ id: current.id });
+    const { errors } = await client.mutations.deleteDrawing({ fileId: current.id });
     if (errors?.length) { toast.error(errors[0].message); return; }
     onDrawingDeleted(current.id);
     setActive(null);

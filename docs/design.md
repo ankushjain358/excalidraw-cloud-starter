@@ -47,6 +47,7 @@ Folder and file CRUD go directly through the model client. The Lambda handles on
 | `createDrawing` | Generates S3 key, writes scene bytes, writes DynamoDB row |
 | `loadDrawing` | Reads scene bytes from S3 |
 | `saveDrawing` | Writes new revision to S3, conditional DynamoDB update |
+| `deleteDrawing` | Verifies ownership, removes all S3 objects for the drawing, then deletes its DynamoDB row |
 
 The Lambda reads `identity.sub` directly from the AppSync event to namespace S3 keys: `users/{sub}/items/{file-id}/revisions/{revision}`.
 

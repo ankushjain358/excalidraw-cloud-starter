@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DynamoDBDocumentClient, DeleteCommand, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const s3 = new S3Client({});
@@ -73,6 +73,39 @@ export const handler = async (event: Event) => {
         ExpressionAttributeValues: { ':next': revision, ':updated': updatedAt, ':key': s3Key, ':size': Buffer.byteLength(body), ':expected': expectedRevision, ':owner': sub },
       }));
       return { revision, updatedAt };
+    }
+
+    if (fieldName === 'deleteDrawing') {
+      const sub = requireSub(identity);
+      const fileId = args.fileId as string;
+      const existing = await db.send(new GetCommand({ TableName: table('WorkspaceFile'), Key: { id: fileId } }));
+      const file = existing.Item;
+      if (!file || file.owner !== sub || file.itemType !== 'DRAWING') throw new Error('Drawing not found.');
+
+      const prefix = `users/${sub}/items/${fileId}/`;
+      let continuationToken: string | undefined;
+      do {
+        const listed = await s3.send(new ListObjectsV2Command({
+          Bucket: bucket(), Prefix: prefix, ContinuationToken: continuationToken,
+        }));
+        const keys = (listed.Contents ?? []).flatMap((object) => object.Key ? [{ Key: object.Key }] : []);
+        if (keys.length > 0) {
+          const deleted = await s3.send(new DeleteObjectsCommand({
+            Bucket: bucket(), Delete: { Objects: keys, Quiet: true },
+          }));
+          if (deleted.Errors?.length) throw new Error('Unable to delete drawing objects.');
+        }
+        continuationToken = listed.NextContinuationToken;
+      } while (continuationToken);
+
+      await db.send(new DeleteCommand({
+        TableName: table('WorkspaceFile'),
+        Key: { id: fileId },
+        ConditionExpression: '#owner = :owner',
+        ExpressionAttributeNames: { '#owner': 'owner' },
+        ExpressionAttributeValues: { ':owner': sub },
+      }));
+      return true;
     }
 
     throw new Error(`Unsupported operation: ${fieldName}`);

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Excalidraw } from '@excalidraw/excalidraw';
-import { Download, Loader2, Save, Trash2, X } from 'lucide-react';
+import { Download, Eye, EyeOff, Loader2, Save, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { WorkspaceFile, SaveStatus } from '../lib/client';
@@ -31,6 +31,7 @@ export function EditorView({
   const saving = saveStatus === 'saving';
   const [name, setName] = useState(drawing.name);
   const [committing, setCommitting] = useState(false);
+  const [toolbarVisible, setToolbarVisible] = useState(true);
   const committedName = useRef(drawing.name);
   const renameRequest = useRef<Promise<boolean> | null>(null);
 
@@ -73,22 +74,27 @@ export function EditorView({
   };
 
   return (
-    <div className="flex h-full flex-col bg-background text-foreground">
-      <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close editor"><X /></Button>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => { void commitName(); }}
-          className="max-w-xs border-0 text-base font-medium shadow-none"
-        />
-        <span className="ml-auto text-sm text-muted-foreground">{statusLabel[saveStatus]}</span>
-        <Button size="lg" onClick={handleSave} disabled={saving || committing}>
-          {saving || committing ? <Loader2 className="animate-spin" /> : <Save />}Save
-        </Button>
-        <Button size="lg" variant="outline" onClick={onExport}><Download />Export</Button>
-        <Button variant="ghost" size="icon" onClick={onDelete} disabled={saving} aria-label="Delete drawing"><Trash2 /></Button>
-      </header>
+    <div className="relative flex h-full flex-col bg-background text-foreground">
+      {toolbarVisible && (
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close editor"><X /></Button>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => { void commitName(); }}
+            className="max-w-xs border-0 text-base font-medium shadow-none"
+          />
+          <span className="ml-auto text-sm text-muted-foreground">{statusLabel[saveStatus]}</span>
+          <Button size="lg" onClick={handleSave} disabled={saving || committing}>
+            {saving || committing ? <Loader2 className="animate-spin" /> : <Save />}Save
+          </Button>
+          <Button size="lg" variant="outline" onClick={onExport}><Download />Export</Button>
+          <Button variant="ghost" size="icon" onClick={onDelete} disabled={saving} aria-label="Delete drawing"><Trash2 /></Button>
+          <Button variant="ghost" size="icon" onClick={() => setToolbarVisible(false)} aria-label="Hide toolbar" title="Hide toolbar">
+            <EyeOff />
+          </Button>
+        </header>
+      )}
 
       <div className="min-h-0 flex-1">
         <Excalidraw
@@ -98,6 +104,18 @@ export function EditorView({
           theme={dark ? 'dark' : 'light'}
         />
       </div>
+      {!toolbarVisible && (
+        <Button
+          className="absolute bottom-4 right-15 z-20 shadow-md"
+          variant="outline"
+          size="icon"
+          onClick={() => setToolbarVisible(true)}
+          aria-label="Show toolbar"
+          title="Show toolbar"
+        >
+          <Eye />
+        </Button>
+      )}
     </div>
   );
 }
