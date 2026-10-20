@@ -75,6 +75,13 @@ export function useWorkspace() {
     return updated;
   }, []);
 
+  const moveDrawing = useCallback(async (drawing: WorkspaceFile, folderId: string): Promise<boolean> => {
+    const { errors } = await client.models.WorkspaceFile.update({ id: drawing.id, folderId } as any);
+    if (errors?.length) { toast.error(errors[0].message); return false; }
+    setDrawings((prev) => prev.map((item) => item.id === drawing.id ? { ...item, folderId } : item));
+    return true;
+  }, []);
+
   const deleteDrawing = useCallback(async (drawing: WorkspaceFile): Promise<boolean> => {
     if (!confirm(`Delete "${drawing.name}"?`)) return false;
     const { errors } = await client.models.WorkspaceFile.delete({ id: drawing.id });
@@ -94,7 +101,7 @@ export function useWorkspace() {
   return {
     folders, drawings, loading,
     refresh, createFolder, renameFolder, deleteFolder,
-    createDrawing, renameDrawing, deleteDrawing,
+    createDrawing, renameDrawing, moveDrawing, deleteDrawing,
     updateDrawing, removeDrawing,
   };
 }

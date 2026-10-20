@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { FolderPlus, Loader2, Moon, Pencil, Plus, Sun, Trash2, FileUp } from 'lucide-react';
+import { Folder as FolderIcon, FolderPlus, Loader2, Moon, MoreHorizontal, Pencil, Plus, Sun, Trash2, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import type { Folder, WorkspaceFile } from '../lib/client';
@@ -23,12 +26,13 @@ type Props = {
   onCreateFolder: () => void;
   onRenameFolder: (folder: Folder, name: string) => Promise<boolean> | boolean;
   onDeleteFolder: (folder: Folder) => void;
+  onMoveDrawing: (drawing: WorkspaceFile, folderId: string) => Promise<boolean> | boolean;
 };
 
 export function WorkspaceView({
   folders, drawings, loading, opening, dark, folderId, onFolderChange, onToggleDark,
   onOpenDrawing, onCreateDrawing, onImportDrawing,
-  onCreateFolder, onRenameFolder, onDeleteFolder,
+  onCreateFolder, onRenameFolder, onDeleteFolder, onMoveDrawing,
 }: Props) {
   const { signOut } = useAuthenticator((ctx) => [ctx.signOut]);
   const [query, setQuery] = useState('');
@@ -36,6 +40,8 @@ export function WorkspaceView({
   const [renamingFolder, setRenamingFolder] = useState<Folder | null>(null);
   const [folderName, setFolderName] = useState('');
   const [savingFolderName, setSavingFolderName] = useState(false);
+  const [movingDrawing, setMovingDrawing] = useState<WorkspaceFile | null>(null);
+  const [savingMove, setSavingMove] = useState(false);
 
   const visible = drawings.filter(
     (d) => (d.folderId ?? null) === folderId && d.name.toLowerCase().includes(query.toLowerCase())
@@ -58,6 +64,16 @@ export function WorkspaceView({
       if (await onRenameFolder(renamingFolder, name)) setRenamingFolder(null);
     } finally {
       setSavingFolderName(false);
+    }
+  };
+
+  const handleMoveDrawing = async (targetFolderId: string) => {
+    if (!movingDrawing || savingMove) return;
+    setSavingMove(true);
+    try {
+      if (await onMoveDrawing(movingDrawing, targetFolderId)) setMovingDrawing(null);
+    } finally {
+      setSavingMove(false);
     }
   };
 
@@ -153,19 +169,36 @@ export function WorkspaceView({
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((drawing) => (
-                <button
-                  key={drawing.id} onClick={() => handleOpen(drawing)}
-                  disabled={opening}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition hover:border-primary hover:shadow-sm disabled:opacity-60"
+                <div
+                  key={drawing.id}
+                  className="flex min-w-0 items-center rounded-lg border transition hover:border-primary hover:shadow-sm"
                 >
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-                    {openingId === drawing.id ? <Loader2 className="size-4 animate-spin" /> : <span className="text-sm">✦</span>}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{drawing.name}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(drawing.updatedAt).toLocaleString()}</p>
-                  </div>
-                </button>
+                  <button
+                    onClick={() => handleOpen(drawing)}
+                    disabled={opening}
+                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-l-lg px-3 py-2.5 text-left disabled:opacity-60"
+                  >
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                      {openingId === drawing.id ? <Loader2 className="size-4 animate-spin" /> : <span className="text-sm">✦</span>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{drawing.name}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(drawing.updatedAt).toLocaleString()}</p>
+                    </div>
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={<Button variant="ghost" size="icon" className="mr-1 shrink-0" aria-label={`More options for ${drawing.name}`} disabled={busy} />}
+                    >
+                      <MoreHorizontal />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={() => setMovingDrawing(drawing)}>
+                        <FolderIcon />Move
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ))}
             </div>
           )}
@@ -197,6 +230,40 @@ export function WorkspaceView({
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={movingDrawing !== null}
+        onOpenChange={(open) => { if (!open && !savingMove) setMovingDrawing(null); }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move drawing</DialogTitle>
+            <DialogDescription>Choose a folder for “{movingDrawing?.name}”.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-72 space-y-1 overflow-y-auto">
+            {folders
+              .filter((folder) => folder.id !== movingDrawing?.folderId)
+              .map((folder) => (
+                <Button
+                  key={folder.id}
+                  type="button"
+                  variant="ghost"
+                  className="w-full justify-start"
+                  disabled={savingMove}
+                  onClick={() => { void handleMoveDrawing(folder.id); }}
+                >
+                  <FolderIcon />{folder.name}
+                </Button>
+              ))}
+            {folders.filter((folder) => folder.id !== movingDrawing?.folderId).length === 0 && (
+              <p className="py-4 text-center text-sm text-muted-foreground">There are no other folders to move this drawing to.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setMovingDrawing(null)} disabled={savingMove}>Cancel</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

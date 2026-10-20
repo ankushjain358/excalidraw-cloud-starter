@@ -85,6 +85,7 @@ export default function App() {
         onCreateFolder={() => workspace.createFolder(folderId)}
         onRenameFolder={workspace.renameFolder}
         onDeleteFolder={(folder) => workspace.deleteFolder(folder, workspace.drawings)}
+        onMoveDrawing={workspace.moveDrawing}
       />
       <Toaster />
     </main>
