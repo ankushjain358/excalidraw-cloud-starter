@@ -47,7 +47,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy backend
-        run: npx ampx pipeline-deploy --branch ${{ github.ref_name }} --app-id ${{ vars.AMPLIFY_APP_ID }}
+        run: npx ampx pipeline-deploy --branch ${{ github.ref_name }} --app-id ${{ secrets.AMPLIFY_APP_ID }}
 
       - name: Trigger frontend deployment
         run: |
